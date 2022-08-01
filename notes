@@ -5,3 +5,12 @@ vm stuff
 do the exports
 export FLASK_APP=flaskr
 export FLASK_ENV=development
+
+#git stuff
+# https://github.com/Fredsterface/computingproject
+#To see what has changed
+git status 
+
+git add [list of files and directories]
+git commit -m "Some meaningful message"
+git push
