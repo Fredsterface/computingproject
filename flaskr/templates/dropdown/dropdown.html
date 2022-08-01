@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dropdown</title>
+</head>
+<body>
+<select name= constituency method="GET" action="/">
+    {% for constituency in constituencies %}
+    <option value= "{{constituency}}" SELECTED>{{constituency}}</option>"
+    {% endfor %}
+</select>
+
+</body>
+</html>
