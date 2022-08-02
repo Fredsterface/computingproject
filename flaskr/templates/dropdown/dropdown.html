@@ -1,15 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style/newstyle.css') }}">
+
+
 <head>
     <meta charset="UTF-8">
     <title>Dropdown</title>
 </head>
-<body>
-<select name= constituency method="GET" action="/">
-    {% for constituency in constituencies %}
-    <option value= "{{constituency}}" SELECTED>{{constituency}}</option>"
-    {% endfor %}
-</select>
 
+<!--
+<div display="row">
+    <div class="column1">
+        <select name=constituency method="GET" action="/">
+            <option selected="selected" disables hidden>Select constituency</option>
+            {% for constituency in constituencies %}
+            <option value="{{constituency}}">{{constituency}}</option>"
+            {% endfor %}
+        </select>
+    </div>
+    <div class="column2">
+        <div id="container">
+
+            <div id="top_div">top</div>
+            <div id="bottom_div">bottom</div>
+
+        </div>
+    </div>
+</div>
+-->
+
+<body>
+    <div id="container">
+        <div id="topleft_div">topleft</div>
+        <div id="bottomleft_div"><select name=constituency method="GET" action="/">
+                <option selected="selected" disables hidden>Select constituency</option>
+                {% for constituency in constituencies %}
+                <option value="{{constituency}}">{{constituency}}</option>"
+                {% endfor %}
+            </select>
+            <p>LLLL</p>
+        </div>
+        <div id="top_div">top</div>
+        <div id="bottom_div">bottom</div>
+
+    </div>
 </body>
+
 </html>

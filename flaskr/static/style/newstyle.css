@@ -1,0 +1,73 @@
+  /*
+  .column1 {
+    float: left;
+    width: 30%;
+  }
+
+  .column2 {
+    float: left;
+    width: 70%;
+  }
+  
+/*
+/* Clear floats after the columns */
+/*
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+*/
+#container {
+    position: absolute;
+    top: 0;
+    right: 25%;
+    left: 0;
+    bottom: 0;
+}
+
+#topleft_div {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0%;
+    width: 25%;
+    bottom: 68%;
+    background-color:#000f99;
+    text-align:center;
+}
+
+#bottomleft_div {
+    position: absolute;
+    top: 32%;
+    right: 0;
+    left: 0%;
+    width: 25%;
+    bottom: 0%;
+    background-color:#990073;
+    text-align:center;
+}
+
+
+#top_div {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 25%;
+    width: 108%;
+    bottom: 68%;
+    background-color:#009900;
+    text-align:center;
+}
+
+#bottom_div {
+    position: absolute;
+    top: 32%;
+    right: 0;
+    left: 25%;
+    width: 108%;
+    bottom: 0;
+    background-color:#990000;
+    text-align:center;
+    color:#FFFFFF;
+}
