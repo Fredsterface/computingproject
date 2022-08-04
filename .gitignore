@@ -1,6 +1,8 @@
 # Local stuff to ignore
 instance
 venv
+test*
+Untitled*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
