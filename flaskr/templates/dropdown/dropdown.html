@@ -1,50 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "bootstrap/base.html" %}
 
+{% block styles %}
+{{super()}}
 <link rel="stylesheet" href="{{ url_for('static', filename='style/newstyle.css') }}">
+{% endblock %}
+{% block title %} Hansard Explorer {% endblock %}
 
-
-<head>
-    <meta charset="UTF-8">
-    <title>Dropdown</title>
-</head>
 
 <!--
-<div display="row">
-    <div class="column1">
-        <select name=constituency method="GET" action="/">
-            <option selected="selected" disables hidden>Select constituency</option>
-            {% for constituency in constituencies %}
-            <option value="{{constituency}}">{{constituency}}</option>"
-            {% endfor %}
-        </select>
-    </div>
-    <div class="column2">
-        <div id="container">
 
-            <div id="top_div">top</div>
-            <div id="bottom_div">bottom</div>
-
-        </div>
-    </div>
-</div>
 -->
 
-<body>
-    <div id="container">
-        <div id="topleft_div">topleft</div>
-        <div id="bottomleft_div"><select name=constituency method="GET" action="/">
+{% block content %}
+<div id="container">
+    <div id="topleft_div">
+        {% if selected_constituency != None %}
+        <h3>{{ selected_constituency }}</h3>
+        {% endif %}
+        {% if MP != None %}
+        <figure class="figure">
+            <img src="{{ MP['image'] }}" alt="image of {{ MP['full_name'] }}" class="figure-img img-fluid rounded">
+            <figcaption class="figure-caption">{{ MP['full_name'] }}</figcaption>
+        </figure>
+        <!--              
+             <br> {{ MP['full_name'] }}
+            <img src="{{ MP['image'] }}" alt="image of {{ MP['full_name'] }}">
+            -->
+        {% endif %}
+    </div>
+    <div id="bottomleft_div">
+        <form method="POST" action="{{url_for('dropdown.search') }}">
+            <select name="constituency" method="GET" action="/">
                 <option selected="selected" disables hidden>Select constituency</option>
                 {% for constituency in constituencies %}
                 <option value="{{constituency}}">{{constituency}}</option>"
                 {% endfor %}
             </select>
-            <p>LLLL</p>
-        </div>
-        <div id="top_div">top</div>
-        <div id="bottom_div">bottom</div>
-
+            <button type="submit" class="btn btn-default">Go</button>
+        </form>
+        <p>Test</p>
     </div>
-</body>
+    <div id="top_div">top</div>
+    <div id="bottom_div">
+    </div>
 
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{super()}}
+{% if wordclouddata != None %}
+<script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
+<script src="https://cdn.anychart.com/releases/v8/js/anychart-tag-cloud.min.js"></script>
+<script>
+    anychart.onDocumentReady(function () {
+        var data = [ 
+            {% for W in wordclouddata %}
+            { "x": "{{W['word']}}", "value": {{W['value']}}},
+            {% endfor %}
+        ];
+
+        // create a tag (word) cloud chart
+        var chart = anychart.tagCloud(data);
+
+        // set a chart title
+        chart.title("Word cloud for {{MP['full_name']}}");
+        // set an array of angles at which the words will be laid out
+        chart.angles([0])
+        // enable a color range
+        chart.colorRange(true);
+        // set the color range length
+        chart.colorRange().length('80%');
+
+        // display the word cloud chart
+        chart.container("bottom_div");
+        chart.draw();
+    });
+</script>
+{% endif %}
+{% endblock %}

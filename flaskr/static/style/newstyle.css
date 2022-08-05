@@ -21,7 +21,7 @@
 #container {
     position: absolute;
     top: 0;
-    right: 25%;
+    right: 20%;
     left: 0;
     bottom: 0;
 }
@@ -32,19 +32,19 @@
     right: 0;
     left: 0%;
     width: 25%;
-    bottom: 68%;
-    background-color:#000f99;
+    bottom: 65%;
+    background-color:#ffffff;
     text-align:center;
 }
 
 #bottomleft_div {
     position: absolute;
-    top: 32%;
+    top: 35%;
     right: 0;
     left: 0%;
     width: 25%;
     bottom: 0%;
-    background-color:#990073;
+    background-color:#ffffff;
     text-align:center;
 }
 
@@ -54,20 +54,20 @@
     top: 0;
     right: 0;
     left: 25%;
-    width: 108%;
-    bottom: 68%;
+    width: 100%;
+    bottom: 65%;
     background-color:#009900;
     text-align:center;
 }
 
 #bottom_div {
     position: absolute;
-    top: 32%;
+    top: 35%;
     right: 0;
     left: 25%;
-    width: 108%;
+    width: 100%;
     bottom: 0;
-    background-color:#990000;
+    background-color:#ffffff;
     text-align:center;
     color:#FFFFFF;
 }
