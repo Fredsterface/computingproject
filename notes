@@ -2,6 +2,13 @@ i have done up to here
 https://flask.palletsprojects.com/en/2.1.x/tutorial/views/
 . venv/bin/activate
 vm stuff
+
+do this to launch notebook: 
+jupyter-notebook --no-browser
+
+
+
+
 do the exports
 export FLASK_APP=flaskr
 export FLASK_ENV=development
@@ -14,3 +21,6 @@ git status
 git add [list of files and directories]
 git commit -m "Some meaningful message"
 git push
+
+enter this to convert notebook to google doc:
+pandoc -f ipynb -t docx getDataExample.ipynb > getDataExample.docx
