@@ -13,7 +13,7 @@ from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
 
-bp = Blueprint('dropdown', __name__, url_prefix='/dropdown')
+bp = Blueprint('dropdown', __name__, url_prefix='/index')
 
 
 APIkey = 'DN8s9LBm8jMBFZihXEG2gqzx'

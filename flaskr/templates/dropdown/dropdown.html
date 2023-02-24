@@ -35,8 +35,15 @@
             <button type="submit" class="btn btn-primary">Go</button>
         </form>
     </div>
-    <div id="top_div">top</div>
     <div id="bottom_div">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'Wordcloud')">Wordcloud</button>
+            <button class="tablinks" onclick="openTab(event, 'Topics')">Topics</button>
+            <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
+          </div>
+          <div id="Wordcloud" class="tabcontent"></div>
+          <div id="Topics" class="tabcontent"></div>
+          <div id="Search" class="tabcontent"></div>
     </div>
 
 </div>
@@ -45,6 +52,21 @@
 
 {% block scripts %}
 {{super()}}
+<script>
+function openTab(evt, cityName) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablinks");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].className = tablinks[i].className.replace(" active", "");
+    }
+    document.getElementById(cityName).style.display = "block";
+    evt.currentTarget.className += " active";
+  }
+</script>
 {% if wordclouddata != None %}
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-tag-cloud.min.js"></script>
@@ -69,7 +91,7 @@
         chart.colorRange().length('80%');
 
         // display the word cloud chart
-        chart.container("bottom_div");
+        chart.container("Wordcloud");
         chart.draw();
     });
 </script>
