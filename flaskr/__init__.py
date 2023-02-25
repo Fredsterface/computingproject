@@ -1,8 +1,10 @@
 import os
 from flask import Flask
 from flask_bootstrap import Bootstrap5
+import logging
 
 def create_app(test_config=None):
+    logging.basicConfig(level=logging.INFO)
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY = 'dev',
@@ -17,9 +19,9 @@ def create_app(test_config=None):
     except OSError:
         pass
         
-    #app.add_url_rule('/', endpoint='index')
-    from . import dropdown
-    app.register_blueprint(dropdown.bp)
+    from . import main
+    app.register_blueprint(main.bp)
 
     bootstrap = Bootstrap5(app)
+    app.logger.info('Completed create_app')
     return app
