@@ -15,9 +15,12 @@ def getQuota():
     return response.json()
 
 def getConstituencies():
-    #print(getQuota())
+    print('working')
+    print(getQuota())
     url = 'https://www.theyworkforyou.com/api/getConstituencies'
+    print('working')
     response = requests.get(url, params={'key': APIkey})
+    print('working')
     return [x['name'] for x in response.json()]
 
 def is_valid_postcode(postcode):

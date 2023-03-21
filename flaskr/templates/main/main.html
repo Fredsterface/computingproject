@@ -41,10 +41,19 @@
             <button class="tablinks" onclick="openTab(event, 'Wordcloud')">Wordcloud</button>
             <button class="tablinks" onclick="openTab(event, 'Topics')">Topics</button>
             <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
-          </div>
-          <div id="Wordcloud" class="tabcontent"></div>
-          <div id="Topics" class="tabcontent"></div>
-          <div id="Search" class="tabcontent"></div>
+        </div>
+        <div id="Wordcloud" class="tabcontent"></div>
+        <div id="Topics" class="tabcontent"></div>
+        <div id="Search" class="tabcontent">
+            <h2>this is a test</h2>
+            {% if form != None %}
+            <form method="POST" action=""{{ url_for('main.search') }}>
+                {{ form.hidden_tag() }}
+                {{ form.searchTerm.label }} {{ form.searchTerm }}
+                {{ form.submit }}
+            </form>
+            {% endif %}
+        </div>
     </div>
 
 </div>
@@ -54,46 +63,46 @@
 {% block scripts %}
 {{super()}}
 <script>
-function openTab(evt, cityName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-      tabcontent[i].style.display = "none";
+    function openTab(evt, cityName) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablinks");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(cityName).style.display = "block";
+        evt.currentTarget.className += " active";
     }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.className += " active";
-  }
 </script>
 {% if wordclouddata != None %}
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-base.min.js"></script>
 <script src="https://cdn.anychart.com/releases/v8/js/anychart-tag-cloud.min.js"></script>
 <script>
     anychart.onDocumentReady(function () {
-        var data = [ 
+        var data = [
             {% for W in wordclouddata %}
-            { "x": "{{W['word']}}", "value": {{W['value']}}},
-            {% endfor %}
+            { "x": "{{W['word']}}", "value": {{ W['value']}}},
+        {% endfor %}
         ];
 
-        // create a tag (word) cloud chart
-        var chart = anychart.tagCloud(data);
+    // create a tag (word) cloud chart
+    var chart = anychart.tagCloud(data);
 
-        // set a chart title
-        chart.title("Word cloud for {{MP.full_name}}");
-        // set an array of angles at which the words will be laid out
-        chart.angles([0])
-        // enable a color range
-        chart.colorRange(true);
-        // set the color range length
-        chart.colorRange().length('80%');
+    // set a chart title
+    chart.title("Word cloud for {{MP.full_name}}");
+    // set an array of angles at which the words will be laid out
+    chart.angles([0])
+    // enable a color range
+    chart.colorRange(true);
+    // set the color range length
+    chart.colorRange().length('80%');
 
-        // display the word cloud chart
-        chart.container("Wordcloud");
-        chart.draw();
+    // display the word cloud chart
+    chart.container("Wordcloud");
+    chart.draw();
     });
 </script>
 {% endif %}

@@ -1,3 +1,5 @@
+from .hansard import getConstituencies
+import logging
 from collections import Counter
 from nltk import ngrams
 from nltk.stem import WordNetLemmatizer
@@ -8,6 +10,13 @@ import string
 from bs4 import BeautifulSoup
 from . hansard import getMP, getHansard, getSpeeches
 from . wordcloud import preprocess_speeches, bigrams_frequency_count
+from flask import Flask, render_template, request, redirect, url_for
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo
+from bertopic import BERTopic 
+from umap import UMAP
+from sentence_transformers import SentenceTransformer
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -15,7 +24,6 @@ from flask import (
 
 bp = Blueprint('main', __name__, url_prefix='/index')
 
-import logging
 
 log = logging.getLogger('Hansard.main')
 
@@ -26,7 +34,14 @@ log = logging.getLogger('Hansard.main')
 # Ngrams allows to group words in common pairs or trigrams..etc
 # We can use counter to count the objects from collections
 
+
+class SearchTermForm(FlaskForm):
+    searchTerm = StringField('Search Term', validators=[DataRequired()])
+    submit = SubmitField()
+
+
 mystopwords = None
+
 
 def get_stopwords():
     print('Getting stopwords')
@@ -37,7 +52,7 @@ def get_stopwords():
     from wordcloud import STOPWORDS
     STOPWORDS.add('(b)')
     STOPWORDS.add('(a)')
-    STOPWORDS.add('(c)')        
+    STOPWORDS.add('(c)')
     words = [w.strip() for w in words] + list(STOPWORDS)
     words = set(words)
     return words
@@ -50,12 +65,16 @@ class HansardMP:
         self._wordcloud_freqs = None
         self._speeches = None
         self.stopwords = get_stopwords()
+        self._embeddings = None
+        self._topic_model = None
+        self._representative_docs = None
+        self._sentenceTransformer = SentenceTransformer('average_word_embeddings_glove.6B.300d')
         log.info('Completed MP initialisation for %s', self.full_name)
 
     @property
     def constituency(self):
         return self.info['constituency']
-    
+
     @property
     def person_id(self):
         return self.info['person_id']
@@ -84,11 +103,14 @@ class HansardMP:
         return self._speeches
 
     def get_wordcloud_freqs(self):
-        log.info('Preprocessing %d speeches for %s', len(self.speeches), self.full_name)
-        words, bigrams = preprocess_speeches(self.speeches, bigrams = True)
+        log.info('Preprocessing %d speeches for %s',
+                 len(self.speeches), self.full_name)
+        words, bigrams = preprocess_speeches(self.speeches, bigrams=True)
         bigrams = list(bigrams)
-        log.info('Frequency counting %d words and %d bigrams for %s', len(words), len(bigrams), self.full_name)
-        freqs = bigrams_frequency_count(words, bigrams, stopwords=self.stopwords)
+        log.info('Frequency counting %d words and %d bigrams for %s',
+                 len(words), len(bigrams), self.full_name)
+        freqs = bigrams_frequency_count(
+            words, bigrams, stopwords=self.stopwords)
         self._wordcloud_freqs = freqs
 
     @property
@@ -96,8 +118,7 @@ class HansardMP:
         if self._wordcloud_freqs is None:
             self.get_wordcloud_freqs()
         return self._wordcloud_freqs
-    
-    
+
 
 def word_frequency(sentence):
     global mystopwords
@@ -135,33 +156,51 @@ def word_frequency(sentence):
 
 constituencies = None
 
-from .hansard import getConstituencies
 
 @bp.route('/', methods=('GET', 'POST'))
-def dropdown(selected_constituency=None, MP=None, wordclouddata=None):
+def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None):
     global constituencies
     if constituencies is None:
         log.info('Requesting constituencies')
         constituencies = getConstituencies()
         log.info('Completed requesting constituencies')
+    if not form is None and form.validate_on_submit():
+        log.info(form.searchTerm.data)
     return render_template('main/main.html',
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=MP,
-                           wordclouddata=wordclouddata)
+                           wordclouddata=wordclouddata, form=form)
 
 
 @bp.route('/search', methods=('GET', 'POST'))
 def search():
+    constituency = None
     select = request.form.get('constituency')
+    log.info("select=%s", select)
     if select == 'Select constituency':
         return redirect(url_for('main.dropdown'))
-    constituency = str(select)
-    MP = HansardMP(constituency)
+    if select is None:
+        log.info('Getting MP from session. SELECT IS NONE')
+        MP = session["MP"]
+        constituency = session["constituency"]
+    else:
+        constituency = str(select)
+        if constituency == session.get("constituency", None):
+            log.info('Getting MP from session. CONSTITUENCY UNCHANGED')
+            MP = session["MP"]
+        else:
+            log.info('GETTING MP FROM HANSARD')
+            MP = HansardMP(constituency)
+            session["MP"] = MP
+            session["constituency"] = constituency
+
+    form = SearchTermForm()
     log.info('Getting wordcloud frequencies for %s', MP.full_name)
     freqs = MP.wordcloud_freqs
     log.info('Completed getting wordcloud frequencies for %s', MP.full_name)
-    wordclouddata = [{'word' : x[0], 'value' : x[1]} for x in freqs.most_common(128)]
+    wordclouddata = [{'word': x[0], 'value': x[1]}
+                     for x in freqs.most_common(128)]
     wordclouddata.sort(key=lambda x: x['value'], reverse=True)
     return dropdown(selected_constituency=constituency,
-                    MP=MP, wordclouddata=wordclouddata)
+                    MP=MP, wordclouddata=wordclouddata, form=form)

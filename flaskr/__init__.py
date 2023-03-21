@@ -2,6 +2,8 @@ import os
 from flask import Flask
 from flask_bootstrap import Bootstrap5
 import logging
+from flask import session
+from flask_session import Session
 
 def create_app(test_config=None):
     logging.basicConfig(level=logging.INFO)
@@ -24,4 +26,7 @@ def create_app(test_config=None):
 
     bootstrap = Bootstrap5(app)
     app.logger.info('Completed create_app')
+    app.config["SESSION_PERMANENT"] = False
+    app.config["SESSION_TYPE"] = "filesystem"
+    Session(app)
     return app
