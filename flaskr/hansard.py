@@ -5,9 +5,11 @@ import functools
 from bs4 import BeautifulSoup
 import postcodes_uk
 from tqdm import tqdm
+import logging
 
 APIkey = 'DN8s9LBm8jMBFZihXEG2gqzx'
 
+log = logging.getLogger('Hansard.hansard')
 
 def getQuota():
     url = 'https://www.theyworkforyou.com/api/getQuota'
@@ -15,12 +17,12 @@ def getQuota():
     return response.json()
 
 def getConstituencies():
-    print('working')
-    print(getQuota())
+    log.info('Getting constituencies')
+    #log.info(getQuota())
     url = 'https://www.theyworkforyou.com/api/getConstituencies'
-    print('working')
+    log.info('Created constituencies url')
     response = requests.get(url, params={'key': APIkey})
-    print('working')
+    log.info('Received response')
     return [x['name'] for x in response.json()]
 
 def is_valid_postcode(postcode):
