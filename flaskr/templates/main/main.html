@@ -52,6 +52,7 @@
                 {{ form.submit }}
             </form>
             {% endif %}
+            <br>
             {% if most_similar != None %}
             <div>
                 <table>
@@ -77,6 +78,14 @@
 
 {% block scripts %}
 {{super()}}
+<script>
+{% if display_tab == 'wordcloud' %}
+  document.getElementById("Wordcloud").style.display = "block"
+{% endif %}
+{% if display_tab == 'search' %}
+  document.getElementById("Search").style.display = "block"
+{% endif %}
+</script>
 <script>
     function openTab(evt, cityName) {
         var i, tabcontent, tablinks;

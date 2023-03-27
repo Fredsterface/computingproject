@@ -127,7 +127,7 @@ h2{
 }
 
 
-table td{
+table, td, th {
   color:#000000;
 }
 
@@ -135,6 +135,6 @@ table, th, td {
   border: 1px solid;
 }
 
-th {
-  text-align: left;
+th, tr {
+  text-align: justify;
 }

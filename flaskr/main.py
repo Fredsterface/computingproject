@@ -227,13 +227,14 @@ constituencies = None
 def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None):
     global constituencies
     log.info('Working')
-
+    display_tab = 'wordcloud'
     if constituencies is None:
         log.info('Requesting constituencies')
         constituencies = getConstituencies()
         log.info('Completed requesting constituencies')
     if not form is None and form.validate_on_submit():
         searchTerm = form.searchTerm.data
+        display_tab = 'search'
     else:
         searchTerm = None
     most_similar = None
@@ -249,7 +250,7 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=SimpleMP,
-                           wordclouddata=wordclouddata, form=form, most_similar=most_similar)
+                           wordclouddata=wordclouddata, form=form, most_similar=most_similar, display_tab=display_tab)
 
 
 @bp.route('/search', methods=('GET', 'POST'))
