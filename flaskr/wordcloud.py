@@ -22,6 +22,23 @@ def preprocess_speeches(speeches, bigrams=True):
     bigrams = ngrams(words, 2)
     return words, bigrams
 
+def preprocess_speeches_for_embeddings(speeches, stopwords=[], min_length=25):
+    out = []
+    for i in range(len(speeches)):
+        text = speeches[i]['text']
+        #Removes all punctuation
+        text = text.translate(str.maketrans('', '', string.punctuation))
+        #Removes text inside parenthesis
+        text = re.sub(r'\d+', '', text)
+        #Lower case
+        text = text.lower()
+        #Remove stopwords
+        text = " ".join(w for w in text.split() if not w in stopwords)
+        if len(text.split()) >= min_length:
+            out.append({'idx' : i, 'timestamp' : speeches[i]['timestamp'], 'text' : text})
+    return out
+
+
 def bigrams_frequency_count(words, bigrams, stopwords = []):
     #Counts words as before, excluding stopwords
     words_counter = Counter([w for w in words if not w in stopwords])

@@ -121,3 +121,20 @@
   border: 1px solid #ccc;
   border-top: none;
 }
+
+h2{
+  color:#000000;
+}
+
+
+table td{
+  color:#000000;
+}
+
+table, th, td {
+  border: 1px solid;
+}
+
+th {
+  text-align: left;
+}

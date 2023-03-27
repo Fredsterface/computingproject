@@ -5,9 +5,11 @@ import functools
 from bs4 import BeautifulSoup
 import postcodes_uk
 from tqdm import tqdm
+import logging
 
 APIkey = 'DN8s9LBm8jMBFZihXEG2gqzx'
 
+log = logging.getLogger('Hansard.hansard')
 
 def getQuota():
     url = 'https://www.theyworkforyou.com/api/getQuota'
@@ -15,12 +17,12 @@ def getQuota():
     return response.json()
 
 def getConstituencies():
-    print('working')
-    print(getQuota())
+    log.info('Getting constituencies')
+    #log.info(getQuota())
     url = 'https://www.theyworkforyou.com/api/getConstituencies'
-    print('working')
+    log.info('Created constituencies url')
     response = requests.get(url, params={'key': APIkey})
-    print('working')
+    log.info('Received response')
     return [x['name'] for x in response.json()]
 
 def is_valid_postcode(postcode):
@@ -100,6 +102,18 @@ def deduplicate(lst):
             deduplicated.append(item)
     return deduplicated
 
+import time
+def make_timestamp(_date, _time):
+    try:
+        if not _time is None:
+            return time.mktime(time.strptime("%s %s" % (_date, _time), "%Y-%m-%d %H:%M:%S"))
+        else:
+            return time.mktime(time.strptime("%s" % (_date), "%Y-%m-%d"))
+    except:
+        if not _time is None:
+            return make_timestamp(_date, None)
+        raise(ValueError, 'Date and time to not make sense. %s %s\n' % _date, _time)
+
 def getSpeeches(person_id, minLength=25):
     """
     This function takes one argument and returns the MP's person ID from Hansard.
@@ -108,13 +122,16 @@ def getSpeeches(person_id, minLength=25):
     person_id (int): gets the relevant data from Hansard
     
     Returns:
-    list: Each list entry is one speech given by the MP
+    list: Each list entry is one speech given by the MP and a timestamp
     """
     data = getHansard(person_id)
     speeches = []
     for x in data['rows']:
         body = x['body']
         text = BeautifulSoup(body, "html.parser").text
-        if len(text.split()) >= minLength:
-            speeches.append(text)
+        if len(text.split()) < minLength:
+            continue
+        if len(speeches) > 0 and text == speeches[-1]['text']:
+            continue
+        speeches.append({'timestamp' : make_timestamp(x['hdate'], x['htime']), 'text' : text})
     return deduplicate(speeches)
