@@ -45,13 +45,28 @@
         <div id="Wordcloud" class="tabcontent"></div>
         <div id="Topics" class="tabcontent"></div>
         <div id="Search" class="tabcontent">
-            <h2>this is a test</h2>
             {% if form != None %}
             <form method="POST" action=""{{ url_for('main.search') }}>
                 {{ form.hidden_tag() }}
                 {{ form.searchTerm.label }} {{ form.searchTerm }}
                 {{ form.submit }}
             </form>
+            {% endif %}
+            {% if most_similar != None %}
+            <div>
+                <table>
+                    <tr>
+                        <th>Date</th>
+                        <th>Speech</th>
+                    </tr>
+                    {% for i in range(most_similar|length) %}
+                    <tr>
+                        <td>{{ most_similar[i].date }}</td>
+                        <td>{{ most_similar[i].text }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
             {% endif %}
         </div>
     </div>

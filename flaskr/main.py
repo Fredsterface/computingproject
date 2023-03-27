@@ -12,11 +12,13 @@ import requests
 import string
 from bs4 import BeautifulSoup
 from . hansard import getMP, getHansard, getSpeeches
-from . wordcloud import preprocess_speeches, bigrams_frequency_count
+from . wordcloud import preprocess_speeches, preprocess_speeches_for_embeddings, bigrams_frequency_count
 from flask import Flask, render_template, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField
 import psutil
+import numpy as np
+from datetime import datetime
 
 log.info('Importing ngrams')
 from . import ngrams
@@ -71,6 +73,11 @@ class HansardSimpleMP:
         self.image = MP.image
         self.full_name = MP.full_name
 
+from numpy import dot
+from numpy.linalg import norm
+def cosineSimilarity(a, b):
+    return dot(a, b)/(norm(a)*norm(b))
+
 class HansardMP:
     def __init__(self, postcode_or_constituency, minLength=25):
         self.info = getMP(postcode_or_constituency)
@@ -83,6 +90,11 @@ class HansardMP:
         self._representative_docs = None
         self._sentenceTransformer = HansardSentenceTransformer
         log.info('Completed MP initialisation for %s', self.full_name)
+    
+    @property
+    def sentenceTransformer(self):
+        return self._sentenceTransformer
+
 
     @property
     def constituency(self):
@@ -118,7 +130,8 @@ class HansardMP:
     def get_wordcloud_freqs(self):
         log.info('Preprocessing %d speeches for %s',
                  len(self.speeches), self.full_name)
-        words, bigrams = preprocess_speeches(self.speeches, bigrams=True)
+        text = [x['text'] for x in self.speeches]
+        words, bigrams = preprocess_speeches(text, bigrams=True)
         bigrams = list(bigrams)
         log.info('Frequency counting %d words and %d bigrams for %s',
                  len(words), len(bigrams), self.full_name)
@@ -131,6 +144,46 @@ class HansardMP:
         if self._wordcloud_freqs is None:
             self.get_wordcloud_freqs()
         return self._wordcloud_freqs
+
+    
+    def get_embeddings(self):
+        data = preprocess_speeches_for_embeddings(self.speeches, stopwords=self.stopwords, min_length=self.minLength)
+        vectors = self.sentenceTransformer.encode([x['text'] for x in data])
+        for i in range(len(data)):
+            data[i]['vector'] = vectors[i]
+        self._embeddings = data
+        log.info('Computed emeddings frequencies for %s', self.full_name)
+
+    @property
+    def embeddings(self):
+        if self._embeddings is None:
+            self.get_embeddings()
+        return self._embeddings
+    
+    def find_most_similar(self, sentence):
+        log.info('Finding vector for sentence %s', sentence) 
+        vector = self.sentenceTransformer.encode([sentence])[0]
+        log.info('Found vector sentence')
+        log.info(vector)
+        scores = [cosineSimilarity(vector, self.embeddings[i]['vector']) for i in range(len(self.embeddings))]
+        idxs = np.argsort(scores) [-10:][::-1]
+        most_similar = []
+        for i in idxs:
+            #log.info('score %.3f', scores[i])
+            id = self.embeddings[i]['idx']
+            text = self.speeches[id]['text']
+            t = datetime.fromtimestamp(self.speeches[id]['timestamp'])
+            t = t.strftime('%d/%m/%Y')
+            most_similar.append({'text' : text,  'date' : t})
+            #log.info(text)
+        return most_similar
+
+
+
+
+
+
+    
 
 
 def word_frequency(sentence):
@@ -180,20 +233,23 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         constituencies = getConstituencies()
         log.info('Completed requesting constituencies')
     if not form is None and form.validate_on_submit():
-        log.info(form.searchTerm.data)
+        searchTerm = form.searchTerm.data
     else:
-        log.info('Form is None')
+        searchTerm = None
+    most_similar = None
     if MP is None:
         SimpleMP = None
     else:
         SimpleMP = HansardSimpleMP(MP)
+        if not searchTerm is None:
+            most_similar = MP.find_most_similar(searchTerm)
     log.info('Rendering template')
     log.info('Using %.2f %% of memory', psutil.virtual_memory().percent)
     return render_template('main/main.html',
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=SimpleMP,
-                           wordclouddata=wordclouddata, form=form)
+                           wordclouddata=wordclouddata, form=form, most_similar=most_similar)
 
 
 @bp.route('/search', methods=('GET', 'POST'))
