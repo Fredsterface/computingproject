@@ -9,6 +9,7 @@ print('Importing SentenceTransformer. %.3f%% memory usage' % psutil.virtual_memo
 from sentence_transformers import SentenceTransformer
 print('Loading Specific SentenceTransformer. %.3f%% memory usage' % psutil.virtual_memory().percent)
 HansardSentenceTransformer = SentenceTransformer('sentence-transformers/average_word_embeddings_komninos')
+#HansardSentenceTransformer = SentenceTransformer('nreimers/MiniLM-L6-H384-uncased')
 print('Importing bertopic. %.3f%% memory usage' % psutil.virtual_memory().percent)
 from bertopic import BERTopic 
 print('Importing UMAP. %.3f%% memory usage' % psutil.virtual_memory().percent)

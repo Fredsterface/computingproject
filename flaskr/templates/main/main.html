@@ -43,10 +43,41 @@
             <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
         </div>
         <div id="Wordcloud" class="tabcontent"></div>
-        <div id="Topics" class="tabcontent"></div>
+        <div id="Topics" class="tabcontent">
+            {% if topics_data != None %}
+            <div class="grid-container">
+                {% for i in range(topics_data |length) %}
+                <div class="grid-item" id="TopicWordcloud{{i}}" onclick="displayTopicRep({{i}})"></div>
+                {% endfor %}
+            </div>
+            <div id="TopicRep">
+                {% for i in range(topics_data |length) %}
+                <h2>
+                    Topic {{i+1}}
+                </h2>
+                <div id="TopicRep{{i}}">
+                    <table>
+                        <tr>
+                            <th>Date</th>
+                            <th>Speech</th>
+                        </tr>
+                        <tr>
+                            <td>Row 1, Column 1</td>
+                            <td>Row 1, Column 2</td>
+                        </tr>
+                        <tr>
+                            <td>Row 2, Column 1</td>
+                            <td>Row 2, Column 2</td>
+                        </tr>
+                    </table>
+                </div>
+               {% endfor %} 
+            </div>
+            {% endif %}
+        </div>
         <div id="Search" class="tabcontent">
             {% if form != None %}
-            <form method="POST" action=""{{ url_for('main.search') }}>
+            <form method="POST" action="" {{ url_for('main.search') }}>
                 {{ form.hidden_tag() }}
                 {{ form.searchTerm.label }} {{ form.searchTerm }}
                 {{ form.submit }}
@@ -79,12 +110,12 @@
 {% block scripts %}
 {{super()}}
 <script>
-{% if display_tab == 'wordcloud' %}
-  document.getElementById("Wordcloud").style.display = "block"
-{% endif %}
-{% if display_tab == 'search' %}
-  document.getElementById("Search").style.display = "block"
-{% endif %}
+    {% if display_tab == 'wordcloud' %}
+    document.getElementById("Wordcloud").style.display = "block"
+    {% endif %}
+    {% if display_tab == 'search' %}
+    document.getElementById("Search").style.display = "block"
+    {% endif %}
 </script>
 <script>
     function openTab(evt, cityName) {
@@ -129,5 +160,35 @@
     chart.draw();
     });
 </script>
+{% endif %}
+{% if topics_data != None %}
+{% for i in range(topics_data |length) %}
+<script>
+    anychart.onDocumentReady(function () {
+        var data = [
+            {% for W in topics_data[i] %}
+            { "x": "{{W['word']}}", "value": {{ W['value']}}},
+        {% endfor %}
+        ];
+
+    // create a tag (word) cloud chart
+    var chart = anychart.tagCloud(data);
+
+    // set a chart title
+    chart.title("Topic {{i+1}}");
+    // set an array of angles at which the words will be laid out
+    chart.angles([0])
+    // enable a color range
+    chart.colorRange(false);
+    // set the color range length
+    // chart.colorRange().length('80%');
+    chart.normal().stroke("#000000");
+    //chart.normal().fontWeight(600);
+    // display the word cloud chart
+    chart.container("TopicWordcloud{{i}}");
+    chart.draw();
+    });
+</script>
+{% endfor %}
 {% endif %}
 {% endblock %}

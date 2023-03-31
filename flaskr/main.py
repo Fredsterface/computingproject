@@ -1,9 +1,7 @@
 import logging
 log = logging.getLogger('Hansard.main')
 log.info('At start of main')
-log.info('A')
 from .hansard import getConstituencies
-log.info('B')
 from collections import Counter
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import WhitespaceTokenizer as tokenizer
@@ -95,7 +93,6 @@ class HansardMP:
     def sentenceTransformer(self):
         return self._sentenceTransformer
 
-
     @property
     def constituency(self):
         return self.info['constituency']
@@ -164,7 +161,6 @@ class HansardMP:
         log.info('Finding vector for sentence %s', sentence) 
         vector = self.sentenceTransformer.encode([sentence])[0]
         log.info('Found vector sentence')
-        log.info(vector)
         scores = [cosineSimilarity(vector, self.embeddings[i]['vector']) for i in range(len(self.embeddings))]
         idxs = np.argsort(scores) [-10:][::-1]
         most_similar = []
@@ -178,10 +174,52 @@ class HansardMP:
             #log.info(text)
         return most_similar
 
+    
+    def get_topic_model(self):
+        # Initiate UMAP
+        umap_model = UMAP(n_neighbors=15,
+                        n_components=5,
+                        min_dist=0.0,
+                        metric='cosine',
+                        random_state=100)
+        # Initiate BERTopic
+        self._topic_model = BERTopic(umap_model=umap_model, embedding_model=self.sentenceTransformer, language="english", calculate_probabilities=True, nr_topics=9, verbose=False)
+
+    @property
+    def topic_model(self):
+        if self._topic_model is None:
+            self.get_topic_model()
+            self.run_topic_model()
+        return self._topic_model
+
+    def run_topic_model(self):
+        text, embeddings = [x['text'] for x in self.embeddings], np.array([x['vector'] for x in self.embeddings])
+        log.info('Running topic model for %s on %d extracts', self.full_name, len(text))
+        self.topics, self.probabilities = self.topic_model.fit_transform(text, embeddings)
+        log.info('Completed running topic model %s', self.full_name)
+
+    def get_representative_docs(self):
+        tables = []
+        log.info('Getting representative docs')
+        for i in range(max(self.topic_model.topics_)+1):
+            tables.append([])
+            log.info('Topic modelling')
+            reps = self.topic_model.get_representative_docs(i)
+            for r in reps:
+                j = next(j for j in range(len(self.embeddings)) if self.embeddings[j]['text'] == r)
+                idx = self.embeddings[j]['idx']
+                t = datetime.fromtimestamp(self.speeches[idx]['timestamp'])
+                t = t.strftime('%d/%m/%Y')
+                tables[i].append([t, self.speeches[idx]['text'].strip()])
+            log.info(tables[i][0])
+        return tables
 
 
-
-
+    @property
+    def representative_docs(self):
+        if self._representative_docs is None:
+            self._representative_docs = self.get_representative_docs()
+        return self._representative_docs
 
     
 
@@ -239,8 +277,12 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         searchTerm = None
     most_similar = None
     if MP is None:
+        topicsData = None
         SimpleMP = None
     else:
+        representative_docs = MP.representative_docs
+        topicsData = [[{'word' : w[0], 'value' : 1.0} for w in MP.topic_model.get_topic(i)] for i in range(max(MP.topic_model.topics_)+1)]
+        log.info(topicsData)
         SimpleMP = HansardSimpleMP(MP)
         if not searchTerm is None:
             most_similar = MP.find_most_similar(searchTerm)
@@ -250,7 +292,7 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=SimpleMP,
-                           wordclouddata=wordclouddata, form=form, most_similar=most_similar, display_tab=display_tab)
+                           wordclouddata=wordclouddata, form=form, most_similar=most_similar, display_tab=display_tab, topics_data=topicsData)
 
 
 @bp.route('/search', methods=('GET', 'POST'))
