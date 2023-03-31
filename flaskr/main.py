@@ -1,37 +1,39 @@
-import logging
-log = logging.getLogger('Hansard.main')
-log.info('At start of main')
-from .hansard import getConstituencies
-from collections import Counter
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import WhitespaceTokenizer as tokenizer
-import pandas as pd
-import requests
-import string
-from bs4 import BeautifulSoup
-from . hansard import getMP, getHansard, getSpeeches
-from . wordcloud import preprocess_speeches, preprocess_speeches_for_embeddings, bigrams_frequency_count
-from flask import Flask, render_template, request, redirect, url_for
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
-import psutil
-import numpy as np
-from datetime import datetime
-
-log.info('Importing ngrams')
-from . import ngrams
-log.info('Importing bertopic')
-from . import BERTopic 
-log.info('Done importing UMAP')
-from . import UMAP
-log.info('Importing sentence transformer')
-from . import HansardSentenceTransformer
-
-from wtforms.validators import DataRequired, Email, EqualTo
-
+from numpy import dot
+from . import BERTopic
+from numpy.linalg import norm
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
+from wtforms.validators import DataRequired, Email, EqualTo
+from . import HansardSentenceTransformer
+from . import UMAP
+from . import ngrams
+from datetime import datetime
+import numpy as np
+import psutil
+from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from flask_wtf import FlaskForm
+from flask import Flask, render_template, request, redirect, url_for
+from . wordcloud import preprocess_speeches, preprocess_speeches_for_embeddings, bigrams_frequency_count
+from . hansard import getMP, getHansard, getSpeeches
+from bs4 import BeautifulSoup
+import string
+import requests
+import pandas as pd
+from nltk.tokenize import WhitespaceTokenizer as tokenizer
+from nltk.stem import WordNetLemmatizer
+from collections import Counter
+from .hansard import getConstituencies
+import logging
+log = logging.getLogger('Hansard.main')
+log.info('At start of main')
+
+log.info('Importing ngrams')
+log.info('Importing bertopic')
+log.info('Done importing UMAP')
+log.info('Importing sentence transformer')
+
+
 log.info('Getting Bluprint')
 bp = Blueprint('main', __name__, url_prefix='/index')
 log.info('Got Blueprint')
@@ -42,6 +44,7 @@ log.info('Got Blueprint')
 # Lemmatizer helps to reduce words to the base formfrom nltk.stem import WordNetLemmatizer
 # Ngrams allows to group words in common pairs or trigrams..etc
 # We can use counter to count the objects from collections
+
 
 class SearchTermForm(FlaskForm):
     searchTerm = StringField('Search Term', validators=[DataRequired()])
@@ -64,6 +67,7 @@ def get_stopwords():
     words = set(words)
     return words
 
+
 class HansardSimpleMP:
     def __init__(self, MP):
         self.constituency = MP.constituency
@@ -71,10 +75,10 @@ class HansardSimpleMP:
         self.image = MP.image
         self.full_name = MP.full_name
 
-from numpy import dot
-from numpy.linalg import norm
+
 def cosineSimilarity(a, b):
     return dot(a, b)/(norm(a)*norm(b))
+
 
 class HansardMP:
     def __init__(self, postcode_or_constituency, minLength=25):
@@ -88,7 +92,7 @@ class HansardMP:
         self._representative_docs = None
         self._sentenceTransformer = HansardSentenceTransformer
         log.info('Completed MP initialisation for %s', self.full_name)
-    
+
     @property
     def sentenceTransformer(self):
         return self._sentenceTransformer
@@ -142,9 +146,9 @@ class HansardMP:
             self.get_wordcloud_freqs()
         return self._wordcloud_freqs
 
-    
     def get_embeddings(self):
-        data = preprocess_speeches_for_embeddings(self.speeches, stopwords=self.stopwords, min_length=self.minLength)
+        data = preprocess_speeches_for_embeddings(
+            self.speeches, stopwords=self.stopwords, min_length=self.minLength)
         vectors = self.sentenceTransformer.encode([x['text'] for x in data])
         for i in range(len(data)):
             data[i]['vector'] = vectors[i]
@@ -156,34 +160,35 @@ class HansardMP:
         if self._embeddings is None:
             self.get_embeddings()
         return self._embeddings
-    
+
     def find_most_similar(self, sentence):
-        log.info('Finding vector for sentence %s', sentence) 
+        log.info('Finding vector for sentence %s', sentence)
         vector = self.sentenceTransformer.encode([sentence])[0]
         log.info('Found vector sentence')
-        scores = [cosineSimilarity(vector, self.embeddings[i]['vector']) for i in range(len(self.embeddings))]
-        idxs = np.argsort(scores) [-10:][::-1]
+        scores = [cosineSimilarity(vector, self.embeddings[i]['vector'])
+                  for i in range(len(self.embeddings))]
+        idxs = np.argsort(scores)[-10:][::-1]
         most_similar = []
         for i in idxs:
-            #log.info('score %.3f', scores[i])
+            # log.info('score %.3f', scores[i])
             id = self.embeddings[i]['idx']
             text = self.speeches[id]['text']
             t = datetime.fromtimestamp(self.speeches[id]['timestamp'])
             t = t.strftime('%d/%m/%Y')
-            most_similar.append({'text' : text,  'date' : t})
-            #log.info(text)
+            most_similar.append({'text': text,  'date': t})
+            # log.info(text)
         return most_similar
 
-    
     def get_topic_model(self):
         # Initiate UMAP
         umap_model = UMAP(n_neighbors=15,
-                        n_components=5,
-                        min_dist=0.0,
-                        metric='cosine',
-                        random_state=100)
+                          n_components=5,
+                          min_dist=0.0,
+                          metric='cosine',
+                          random_state=100)
         # Initiate BERTopic
-        self._topic_model = BERTopic(umap_model=umap_model, embedding_model=self.sentenceTransformer, language="english", calculate_probabilities=True, nr_topics=9, verbose=False)
+        self._topic_model = BERTopic(umap_model=umap_model, embedding_model=self.sentenceTransformer,
+                                     language="english", calculate_probabilities=True, nr_topics=9, verbose=False)
 
     @property
     def topic_model(self):
@@ -193,35 +198,35 @@ class HansardMP:
         return self._topic_model
 
     def run_topic_model(self):
-        text, embeddings = [x['text'] for x in self.embeddings], np.array([x['vector'] for x in self.embeddings])
-        log.info('Running topic model for %s on %d extracts', self.full_name, len(text))
-        self.topics, self.probabilities = self.topic_model.fit_transform(text, embeddings)
+        text, embeddings = [x['text'] for x in self.embeddings], np.array(
+            [x['vector'] for x in self.embeddings])
+        log.info('Running topic model for %s on %d extracts',
+                 self.full_name, len(text))
+        self.topics, self.probabilities = self.topic_model.fit_transform(
+            text, embeddings)
         log.info('Completed running topic model %s', self.full_name)
 
     def get_representative_docs(self):
         tables = []
         log.info('Getting representative docs')
-        for i in range(max(self.topic_model.topics_)+1):
+        for i in self.topic_model.get_topics().keys():
             tables.append([])
-            log.info('Topic modelling')
             reps = self.topic_model.get_representative_docs(i)
             for r in reps:
-                j = next(j for j in range(len(self.embeddings)) if self.embeddings[j]['text'] == r)
+                j = next(j for j in range(len(self.embeddings))
+                         if self.embeddings[j]['text'] == r)
                 idx = self.embeddings[j]['idx']
                 t = datetime.fromtimestamp(self.speeches[idx]['timestamp'])
                 t = t.strftime('%d/%m/%Y')
-                tables[i].append([t, self.speeches[idx]['text'].strip()])
-            log.info(tables[i][0])
+                tables[-1].append([t, self.speeches[idx]['text'].strip()])
+            log.info('tables %d has %d rows' % (len(tables)-1, len(tables[-1])))
         return tables
-
 
     @property
     def representative_docs(self):
         if self._representative_docs is None:
             self._representative_docs = self.get_representative_docs()
         return self._representative_docs
-
-    
 
 
 def word_frequency(sentence):
@@ -232,18 +237,18 @@ def word_frequency(sentence):
     print('starting to tokenize')
     new_tokens = tokenizer().tokenize(sentence)
     print('finished tokenize')
-    #new_tokens = sentence.split()
+    # new_tokens = sentence.split()
     new_tokens = [t.lower().strip() for t in new_tokens]
-    #S = set(stopwords.words('english'))
+    # S = set(stopwords.words('english'))
     if mystopwords is None:
         mystopwords = get_stopwords()
     S = mystopwords
     new_tokens = [t for t in new_tokens if t not in S]
     new_tokens = [t for t in new_tokens if t.isalpha()]
     lemmatizer = WordNetLemmatizer()
-    #print('startin lemon')
-    #new_tokens = [lemmatizer.lemmatize(t) for t in new_tokens]
-    #print('finish lemon')
+    # print('startin lemon')
+    # new_tokens = [lemmatizer.lemmatize(t) for t in new_tokens]
+    # print('finish lemon')
     # counts the words, pairs and trigrams
     counted = Counter(new_tokens)
     counted_2 = Counter(ngrams(new_tokens, 2))
@@ -277,11 +282,13 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         searchTerm = None
     most_similar = None
     if MP is None:
+        representative_docs = None
         topicsData = None
         SimpleMP = None
     else:
         representative_docs = MP.representative_docs
-        topicsData = [[{'word' : w[0], 'value' : 1.0} for w in MP.topic_model.get_topic(i)] for i in range(max(MP.topic_model.topics_)+1)]
+        topicsData = [[{'word': w[0], 'value': 1.0} for w in MP.topic_model.get_topic(
+            i)] for i in range(max(MP.topic_model.topics_)+1)]
         log.info(topicsData)
         SimpleMP = HansardSimpleMP(MP)
         if not searchTerm is None:
@@ -292,7 +299,9 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=SimpleMP,
-                           wordclouddata=wordclouddata, form=form, most_similar=most_similar, display_tab=display_tab, topics_data=topicsData)
+                           wordclouddata=wordclouddata, form=form, most_similar=most_similar, 
+                           display_tab=display_tab, topics_data=topicsData, 
+                           representative_docs=representative_docs)
 
 
 @bp.route('/search', methods=('GET', 'POST'))

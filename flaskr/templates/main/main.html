@@ -51,7 +51,7 @@
                 {% endfor %}
             </div>
             <div id="TopicRep">
-                {% for i in range(topics_data |length) %}
+                {% for i in range(representative_docs |length) %}
                 <h2>
                     Topic {{i+1}}
                 </h2>
@@ -61,14 +61,12 @@
                             <th>Date</th>
                             <th>Speech</th>
                         </tr>
+                        {% for k in range(representative_docs[i] |length) %}
                         <tr>
-                            <td>Row 1, Column 1</td>
-                            <td>Row 1, Column 2</td>
+                            <td>{{representative_docs[i][k][0]}}</td>
+                            <td>{{representative_docs[i][k][1]}}</td>
                         </tr>
-                        <tr>
-                            <td>Row 2, Column 1</td>
-                            <td>Row 2, Column 2</td>
-                        </tr>
+                        {% endfor %}
                     </table>
                 </div>
                {% endfor %} 
