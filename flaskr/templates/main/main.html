@@ -36,6 +36,17 @@
             <button type="submit" class="btn btn-primary">Go</button>
         </form>
     </div>
+    {% if instructions %}
+    <div id="bottom_div">
+        <h2> Welcome to Hansard Explorer </h2>
+        <br>
+        <p> To select a constituency, use the dropdown menu on the left.</p>
+        <p> When the MP has finished loading, select one of the tabs above to get more information about their speeches. </p>
+        <p> The Word Cloud tab produces a word cloud of all the speeches from the selected MP over 25 words, and puts them into a word cloud. This is the tab that is first shown when the MP has finished loading in </p>
+        <p> The Topics tab produces a selection of common topics that the selected MP discusses, when you click on one of the topics, a list of speeches will show up</p>
+        <p> If you have selected the Search tab, search for the word you would like to find in one of the speeches, and a list of relevant speeches will show up. </p>
+    </div>
+    {% else %}
     <div id="bottom_div">
         <div class="tab">
             <button class="tablinks" onclick="openTab(event, 'Wordcloud')">Wordcloud</button>
@@ -100,7 +111,7 @@
             {% endif %}
         </div>
     </div>
-
+    {% endif %}
 </div>
 {% endblock %}
 

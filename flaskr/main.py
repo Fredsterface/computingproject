@@ -210,6 +210,8 @@ class HansardMP:
         tables = []
         log.info('Getting representative docs')
         for i in self.topic_model.get_topics().keys():
+            if i == -1:
+                continue
             tables.append([])
             reps = self.topic_model.get_representative_docs(i)
             for r in reps:
@@ -275,6 +277,9 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         log.info('Requesting constituencies')
         constituencies = getConstituencies()
         log.info('Completed requesting constituencies')
+        instructions = True
+    else:
+        instructions = False
     if not form is None and form.validate_on_submit():
         searchTerm = form.searchTerm.data
         display_tab = 'search'
@@ -288,12 +293,16 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
     else:
         representative_docs = MP.representative_docs
         topicsData = [[{'word': w[0], 'value': 1.0} for w in MP.topic_model.get_topic(
-            i)] for i in range(max(MP.topic_model.topics_)+1)]
+            i)] for i in MP.topic_model.get_topics().keys() if i != -1]
         log.info(topicsData)
         SimpleMP = HansardSimpleMP(MP)
+        selected_constituency = MP.constituency
+        instructions = False
         if not searchTerm is None:
             most_similar = MP.find_most_similar(searchTerm)
     log.info('Rendering template')
+    if instructions:
+        log.info('Rendering initial page with instructions')
     log.info('Using %.2f %% of memory', psutil.virtual_memory().percent)
     return render_template('main/main.html',
                            constituencies=constituencies,
@@ -301,7 +310,7 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
                            MP=SimpleMP,
                            wordclouddata=wordclouddata, form=form, most_similar=most_similar, 
                            display_tab=display_tab, topics_data=topicsData, 
-                           representative_docs=representative_docs)
+                           representative_docs=representative_docs, instructions=instructions)
 
 
 @bp.route('/search', methods=('GET', 'POST'))

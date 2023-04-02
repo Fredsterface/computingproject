@@ -64,5 +64,5 @@ def create_app(test_config=None):
     app.config["SESSION_TYPE"] = "filesystem"
     Session(app)
     app.logger.info('Completed session_app')
-
+    app.jinja_env.cache = {}
     return app
