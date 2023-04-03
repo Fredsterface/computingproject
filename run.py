@@ -21,6 +21,6 @@ if __name__ == '__main__':
     # access the debug flag entered by the user (or False by default)
     debug_mode = args.debug
     if debug_mode:
-        app.run(debug=True, use_reloader=True, port=port_number)
+        app.run(debug=True, port=port_number)
     else:
         app.run(host='0.0.0.0', port=port_number, threaded=True)

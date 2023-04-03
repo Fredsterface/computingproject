@@ -122,7 +122,7 @@
   border-top: none;
 }
 
-h2, h1, p{
+h2, h1, h3, p{
   color:#000000;
 }
 
@@ -152,4 +152,14 @@ th, tr {
   padding: 20px;
   font-size: 30px;
   text-align: center;
+}
+
+div#loading_div {
+  display: none;
+  cursor: wait;
+}
+
+div#loading_search_div {
+  display: none;
+  cursor: wait;
 }

@@ -33,91 +33,112 @@
                 <option value="{{constituency}}">{{constituency}}</option>"
                 {% endfor %}
             </select>
-            <button type="submit" class="btn btn-primary">Go</button>
+            <button type="submit" class="btn btn-primary" onclick="loadingMP();">Go</button>
         </form>
     </div>
-    {% if instructions %}
     <div id="bottom_div">
-        <h2> Welcome to Hansard Explorer </h2>
-        <br>
-        <p> To select a constituency, use the dropdown menu on the left.</p>
-        <p> When the MP has finished loading, select one of the tabs above to get more information about their speeches. </p>
-        <p> The Word Cloud tab produces a word cloud of all the speeches from the selected MP over 25 words, and puts them into a word cloud. This is the tab that is first shown when the MP has finished loading in </p>
-        <p> The Topics tab produces a selection of common topics that the selected MP discusses, when you click on one of the topics, a list of speeches will show up</p>
-        <p> If you have selected the Search tab, search for the word you would like to find in one of the speeches, and a list of relevant speeches will show up. </p>
-    </div>
-    {% else %}
-    <div id="bottom_div">
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'Wordcloud')">Wordcloud</button>
-            <button class="tablinks" onclick="openTab(event, 'Topics')">Topics</button>
-            <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
+        <div id="loading_div">
+            <br>
+            <img style="display: inline-block; height: 300px; width: auto; text-align:center" src="https://ichef.bbci.co.uk/news/976/cpsprodpb/917A/production/_108824273_chimps2.jpg.webp">
+            <br>
+            <h2> Loading </h2>
+            <img style="display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%, 90%);"
+                src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/ab79a231234507.564a1d23814ef.gif">
         </div>
-        <div id="Wordcloud" class="tabcontent"></div>
-        <div id="Topics" class="tabcontent">
-            {% if topics_data != None %}
-            <div class="grid-container">
-                {% for i in range(topics_data |length) %}
-                <div class="grid-item" id="TopicWordcloud{{i}}" onclick="displayTopicRep({{i}})"></div>
-                {% endfor %}
+        <div id="content_div">
+            {% if instructions %}
+            <h2> Welcome to Hansard Explorer </h2>
+            <br>
+            <p> To select a constituency, use the dropdown menu on the left.</p>
+            <p> When the MP has finished loading, select one of the tabs above to get more information about their
+                speeches. </p>
+            <p> The Word Cloud tab produces a word cloud of all the speeches from the selected MP over 25 words, and
+                puts them into a word cloud. This is the tab that is first shown when the MP has finished loading in
+            </p>
+            <p> The Topics tab produces a selection of common topics that the selected MP discusses, when you click on
+                one of the topics, a list of speeches will show up</p>
+            <p> If you have selected the Search tab, search for the word you would like to find in one of the speeches,
+                and a list of relevant speeches will show up. </p>
+            {% else %}
+            <div class="tab">
+                <button class="tablinks" onclick="openTab(event, 'Wordcloud')">Wordcloud</button>
+                <button class="tablinks" onclick="openTab(event, 'Topics')">Topics</button>
+                <button class="tablinks" onclick="openTab(event, 'Search')">Search</button>
             </div>
-            <div id="TopicRep">
-                {% for i in range(representative_docs |length) %}
-                <h2>
-                    Topic {{i+1}}
-                </h2>
-                <div id="TopicRep{{i}}">
+            <div id="Wordcloud" class="tabcontent"></div>
+            <div id="Topics" class="tabcontent">
+                {% if topics_data != None %}
+                <h3> Click on topics to display representative speeches </h3>
+                <div class="grid-container">
+                    {% for i in range(topics_data |length) %}
+                    <div class="grid-item" id="TopicWordcloud{{i}}" onclick="displayTopicRep({{i}})"></div>
+                    {% endfor %}
+                </div>
+                <div id="TopicRep">
+                    {% for i in range(representative_docs |length) %}
+                    <div id="TopicRep{{i}}">
+                        <h2>
+                            Topic {{i+1}}
+                        </h2>
+                        <table>
+                            <tr>
+                                <th>Date</th>
+                                <th>Speech</th>
+                            </tr>
+                            {% for k in range(representative_docs[i] |length) %}
+                            <tr>
+                                <td>{{representative_docs[i][k][0]}}</td>
+                                <td>{{representative_docs[i][k][1]}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div id="Search" class="tabcontent">
+                {% if form != None %}
+                <form method="POST" action="{{ url_for('main.search') }}" onsubmit="loadingSearch();">
+                    {{ form.hidden_tag() }}
+                    {{ form.searchTerm.label }} {{ form.searchTerm }}
+                    {{ form.submit }}
+                </form>
+                {% endif %}
+                <div id="loading_search_div">
+                    <h2> Searching for most similar speeches </h2>
+                    <img style="display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%, 90%);"
+                        src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/ab79a231234507.564a1d23814ef.gif">        
+                </div>
+                <br>
+                {% if most_similar != None %}
+                <div>
                     <table>
                         <tr>
                             <th>Date</th>
                             <th>Speech</th>
                         </tr>
-                        {% for k in range(representative_docs[i] |length) %}
+                        {% for i in range(most_similar|length) %}
                         <tr>
-                            <td>{{representative_docs[i][k][0]}}</td>
-                            <td>{{representative_docs[i][k][1]}}</td>
+                            <td>{{ most_similar[i].date }}</td>
+                            <td>{{ most_similar[i].text }}</td>
                         </tr>
                         {% endfor %}
                     </table>
                 </div>
-               {% endfor %} 
-            </div>
-            {% endif %}
-        </div>
-        <div id="Search" class="tabcontent">
-            {% if form != None %}
-            <form method="POST" action="" {{ url_for('main.search') }}>
-                {{ form.hidden_tag() }}
-                {{ form.searchTerm.label }} {{ form.searchTerm }}
-                {{ form.submit }}
-            </form>
-            {% endif %}
-            <br>
-            {% if most_similar != None %}
-            <div>
-                <table>
-                    <tr>
-                        <th>Date</th>
-                        <th>Speech</th>
-                    </tr>
-                    {% for i in range(most_similar|length) %}
-                    <tr>
-                        <td>{{ most_similar[i].date }}</td>
-                        <td>{{ most_similar[i].text }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
+                {% endif %}
             </div>
             {% endif %}
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 
 {% block scripts %}
 {{super()}}
+{% if instructions %}
+{% else %}
 <script>
     {% if display_tab == 'wordcloud' %}
     document.getElementById("Wordcloud").style.display = "block"
@@ -126,6 +147,7 @@
     document.getElementById("Search").style.display = "block"
     {% endif %}
 </script>
+{% endif %}
 <script>
     function openTab(evt, cityName) {
         var i, tabcontent, tablinks;
@@ -139,6 +161,18 @@
         }
         document.getElementById(cityName).style.display = "block";
         evt.currentTarget.className += " active";
+    }
+</script>
+<script>
+    function loadingMP() {
+        document.getElementById("loading_div").style.display = "block"
+        document.getElementById("content_div").style.display = "none"
+        document.getElementById("topleft_div").style.display = "none"
+    }
+</script>
+<script>
+    function loadingSearch() {
+        document.getElementById("loading_search_div").style.display = "block"
     }
 </script>
 {% if wordclouddata != None %}
@@ -199,5 +233,25 @@
     });
 </script>
 {% endfor %}
+{% endif %}
+{% if topics_data != None %}
+<script>
+    const topicTables = new Array();
+    {% for i in range(representative_docs | length) %}
+    topicTables.push(document.getElementById("TopicRep{{i}}"));
+    topicTables[{{ i }}].style.display = "none";
+    {% endfor %}
+    function displayTopicRep(i) {
+        var j;
+        for (j = 0; j < topicTables.length; j++) {
+            if (j == i) {
+                topicTables[i].style.display = "block";
+            }
+            else {
+                topicTables[j].style.display = "none";
+            }
+        }
+    }
+</script>
 {% endif %}
 {% endblock %}
