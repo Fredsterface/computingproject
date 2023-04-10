@@ -32,7 +32,7 @@ log.info('Importing sentence transformer')
 
 
 log.info('Getting Bluprint')
-bp = Blueprint('main', __name__, url_prefix='/index')
+bp = Blueprint('main', __name__, url_prefix='/')
 log.info('Got Blueprint')
 
 # load in the NTLK stopwords to remove articles, preposition and other words that are not actionable
@@ -242,7 +242,6 @@ class HansardMP:
                 t = datetime.fromtimestamp(self.speeches[idx]['timestamp'])
                 t = t.strftime('%d/%m/%Y')
                 tables[-1].append([t, self.speeches[idx]['text'].strip()])
-            log.info('tables %d has %d rows' % (len(tables)-1, len(tables[-1])))
         return tables
 
     @property
@@ -288,9 +287,12 @@ def word_frequency(sentence):
 
 constituencies = None
 
+@bp.route('/index')
+def index():
+    return redirect(url_for('main.main'))
 
 @bp.route('/', methods=('GET', 'POST'))
-def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None):
+def main(selected_constituency=None, MP=None, wordclouddata=None, form=None):
     global constituencies
     log.info('Working')
     display_tab = 'wordcloud'
@@ -316,7 +318,6 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         representative_docs = MP.representative_docs
         topicsData = [[{'word': w[0], 'value': 1.0} for w in MP.topic_model.get_topic(
             i)] for i in MP.topic_model.get_topics().keys() if i != -1]
-        log.info(topicsData)
         SimpleMP = HansardSimpleMP(MP)
         selected_constituency = MP.constituency
         instructions = False
@@ -367,5 +368,5 @@ def search():
     wordclouddata = [{'word': x[0], 'value': x[1]}
                      for x in freqs.most_common(64)]
     wordclouddata.sort(key=lambda x: x['value'], reverse=True)
-    return dropdown(selected_constituency=constituency,
+    return main(selected_constituency=constituency,
                     MP=MP, wordclouddata=wordclouddata, form=form)

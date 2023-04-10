@@ -2,7 +2,161 @@
 
 {% block styles %}
 {{super()}}
-<link rel="stylesheet" href="{{ url_for('static', filename='style/newstyle.css') }}">
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='style/newstyle.css') }}"> -->
+<style>
+    #container {
+        position: absolute;
+        top: 0;
+        right: 20%;
+        left: 0;
+        bottom: 0;
+    }
+
+    #topleft_div {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0%;
+        width: 25%;
+        bottom: 45%;
+        background-color: #ffffff;
+        text-align: center;
+    }
+
+    #bottomleft_div {
+        position: absolute;
+        top: 45%;
+        right: 0;
+        left: 0%;
+        width: 25%;
+        bottom: 0%;
+        background-color: #ffffff;
+        text-align: center;
+    }
+
+    #top_div {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 25%;
+        width: 100%;
+        bottom: 65%;
+        background-color: #009900;
+        text-align: center;
+    }
+
+    #bottom_div {
+        position: absolute;
+        top: 0%;
+        right: 0;
+        left: 25%;
+        width: 95%;
+        bottom: 0;
+        background-color: #ffffff;
+        text-align: center;
+        color: #FFFFFF;
+    }
+
+    #Wordcloud {
+        position: absolute;
+        top: 10%;
+        right: 0;
+        left: 0%;
+        width: 100%;
+        bottom: 0;
+        background-color: #ffffff;
+        text-align: center;
+        color: #FFFFFF;
+    }
+
+    /* Style the tab */
+    .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+    /* Style the buttons inside the tab */
+    .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 17px;
+    }
+
+    /* Change background color of buttons on hover */
+    .tab button:hover {
+        background-color: #ddd;
+    }
+
+    /* Create an active/current tablink class */
+    .tab button.active {
+        background-color: #ccc;
+    }
+
+    /* Style the tab content */
+    .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    h2,
+    h1,
+    h3,
+    p {
+        color: #000000;
+    }
+
+
+    table,
+    td,
+    th {
+        color: #000000;
+    }
+
+    table,
+    th,
+    td {
+        border: 1px solid;
+    }
+
+    th,
+    tr {
+        text-align: justify;
+    }
+
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: auto auto auto auto;
+        background-color: #2196F3;
+        padding: 10px;
+    }
+
+    .grid-item {
+        background-color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(0, 0, 0, 0.8);
+        padding: 20px;
+        font-size: 30px;
+        text-align: center;
+    }
+
+    div#loading_div {
+        display: none;
+        cursor: wait;
+    }
+
+    div#loading_search_div {
+        display: none;
+        cursor: wait;
+    }
+</style>
 {% endblock %}
 {% block title %} Hansard Explorer {% endblock %}
 
@@ -40,7 +194,8 @@
     <div id="bottom_div">
         <div id="loading_div">
             <br>
-            <img style="display: inline-block; height: 300px; width: auto; text-align:center" src="https://ichef.bbci.co.uk/news/976/cpsprodpb/917A/production/_108824273_chimps2.jpg.webp">
+            <img style="display: inline-block; height: 300px; width: auto; text-align:center"
+                src="https://ichef.bbci.co.uk/news/976/cpsprodpb/917A/production/_108824273_chimps2.jpg.webp">
             <br>
             <h2> Loading </h2>
             <img style="display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%, 90%);"
@@ -109,7 +264,7 @@
                 <div id="loading_search_div">
                     <h2> Searching for most similar speeches </h2>
                     <img style="display: block;-webkit-user-select: none;margin: auto;background-color: hsl(0, 0%, 90%);"
-                        src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/ab79a231234507.564a1d23814ef.gif">        
+                        src="https://mir-s3-cdn-cf.behance.net/project_modules/disp/ab79a231234507.564a1d23814ef.gif">
                 </div>
                 <br>
                 {% if most_similar != None %}

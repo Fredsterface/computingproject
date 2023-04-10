@@ -35,24 +35,13 @@ lemmatizer = WordNetLemmatizer()
 _ = lemmatizer.lemmatize('cat') #Force it to do initial setup work now
 _t1 = time.time()
 print('\tTook %.3f seconds ' % (_t1-_t0))
-
-
-class LogFilter(logging.Filter):
-    def filer(self, record):
-        record.memory = psutil.virtual_memory().percent
-        return True
     
-logging.basicConfig(level=logging.INFO, format="%(asctime)s ?? memory %(levelname)s : %(message)s", datefmt='%m/%d/%Y %I/%M:%S %p')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s : %(message)s", datefmt='%m/%d/%Y %I/%M:%S %p')
 log = logging.getLogger(__file__)
-log.addFilter(LogFilter())
-
-
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
-    app.logger.addFilter(LogFilter())
-    logging.getLogger('werkzeug').addFilter(LogFilter())
     app.logger.info('Starting create_app')
     app.config.from_mapping(
         SECRET_KEY = 'dev',
