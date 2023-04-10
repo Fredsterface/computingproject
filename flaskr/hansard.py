@@ -91,7 +91,7 @@ def getHansard(person_id):
             if len(data0['rows']) == 0:
                 break
             data['rows'].extend(data0['rows'])
-        return data
+    return data
 
 
 

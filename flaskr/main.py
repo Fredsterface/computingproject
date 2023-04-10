@@ -2,23 +2,20 @@ from numpy import dot
 from . import BERTopic
 from numpy.linalg import norm
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, redirect, render_template, request, session, url_for
 )
-from wtforms.validators import DataRequired, Email, EqualTo
+from wtforms.validators import DataRequired
 from . import HansardSentenceTransformer
 from . import UMAP
 from . import ngrams
 from datetime import datetime
 import numpy as np
 import psutil
-from wtforms import StringField, PasswordField, BooleanField, SubmitField
+from wtforms import StringField, SubmitField
 from flask_wtf import FlaskForm
 from flask import Flask, render_template, request, redirect, url_for
 from . wordcloud import preprocess_speeches, preprocess_speeches_for_embeddings, bigrams_frequency_count
 from . hansard import getMP, getHansard, getSpeeches
-from bs4 import BeautifulSoup
-import string
-import requests
 import pandas as pd
 from nltk.tokenize import WhitespaceTokenizer as tokenizer
 from nltk.stem import WordNetLemmatizer
@@ -47,6 +44,9 @@ log.info('Got Blueprint')
 
 
 class SearchTermForm(FlaskForm):
+    """
+    Form in Search tab
+    """
     searchTerm = StringField('Search Term', validators=[DataRequired()])
     submit = SubmitField()
 
@@ -55,6 +55,9 @@ mystopwords = None
 
 
 def get_stopwords():
+    """
+    Gets the list of stopwords from the stopwords file
+    """
     print('Getting stopwords')
     global mystopwords
     with bp.open_resource('static/stopwords.txt', 'r') as F:
@@ -69,6 +72,9 @@ def get_stopwords():
 
 
 class HansardSimpleMP:
+    """
+    Gets the MP data for the webpage (useful stuff)
+    """
     def __init__(self, MP):
         self.constituency = MP.constituency
         self.party = MP.party
@@ -77,11 +83,26 @@ class HansardSimpleMP:
 
 
 def cosineSimilarity(a, b):
+    """"
+    Computes the cosine similarity of two vectors
+    """
     return dot(a, b)/(norm(a)*norm(b))
+
+def cosineSimilarityNormalised(a, b):
+    """"
+    Computes the cosine similarity of two vectors with norm 1
+    """
+    return dot(a, b)
 
 
 class HansardMP:
+    """
+    Gets and stores all the info on the MP
+    """
     def __init__(self, postcode_or_constituency, minLength=25):
+        """
+        
+        """
         self.info = getMP(postcode_or_constituency)
         self.minLength = minLength
         self._wordcloud_freqs = None
@@ -149,7 +170,7 @@ class HansardMP:
     def get_embeddings(self):
         data = preprocess_speeches_for_embeddings(
             self.speeches, stopwords=self.stopwords, min_length=self.minLength)
-        vectors = self.sentenceTransformer.encode([x['text'] for x in data])
+        vectors = self.sentenceTransformer.encode([x['text'] for x in data], normalize_embeddings=True)
         for i in range(len(data)):
             data[i]['vector'] = vectors[i]
         self._embeddings = data
@@ -163,9 +184,9 @@ class HansardMP:
 
     def find_most_similar(self, sentence):
         log.info('Finding vector for sentence %s', sentence)
-        vector = self.sentenceTransformer.encode([sentence])[0]
+        vector = self.sentenceTransformer.encode([sentence], normalize_embeddings=True)[0]
         log.info('Found vector sentence')
-        scores = [cosineSimilarity(vector, self.embeddings[i]['vector'])
+        scores = [cosineSimilarityNormalised(vector, self.embeddings[i]['vector'])
                   for i in range(len(self.embeddings))]
         idxs = np.argsort(scores)[-10:][::-1]
         most_similar = []
@@ -287,6 +308,7 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         searchTerm = None
     most_similar = None
     if MP is None:
+        instructions = True
         representative_docs = None
         topicsData = None
         SimpleMP = None
@@ -300,17 +322,20 @@ def dropdown(selected_constituency=None, MP=None, wordclouddata=None, form=None)
         instructions = False
         if not searchTerm is None:
             most_similar = MP.find_most_similar(searchTerm)
-    log.info('Rendering template')
     if instructions:
         log.info('Rendering initial page with instructions')
+    else:
+        log.info('Rendering template')
     log.info('Using %.2f %% of memory', psutil.virtual_memory().percent)
-    return render_template('main/main.html',
+    ret = render_template('main/main.html',
                            constituencies=constituencies,
                            selected_constituency=selected_constituency,
                            MP=SimpleMP,
                            wordclouddata=wordclouddata, form=form, most_similar=most_similar, 
                            display_tab=display_tab, topics_data=topicsData, 
                            representative_docs=representative_docs, instructions=instructions)
+    log.info('Completed rendering template')
+    return ret
 
 
 @bp.route('/search', methods=('GET', 'POST'))
@@ -340,7 +365,7 @@ def search():
     freqs = MP.wordcloud_freqs
     log.info('Completed getting wordcloud frequencies for %s', MP.full_name)
     wordclouddata = [{'word': x[0], 'value': x[1]}
-                     for x in freqs.most_common(128)]
+                     for x in freqs.most_common(64)]
     wordclouddata.sort(key=lambda x: x['value'], reverse=True)
     return dropdown(selected_constituency=constituency,
                     MP=MP, wordclouddata=wordclouddata, form=form)

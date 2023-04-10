@@ -1,8 +1,11 @@
-from nltk.util import ngrams
+from . import ngrams
 from collections import Counter
-from nltk.stem import WordNetLemmatizer
+from . import lemmatizer
 import string
 import re
+import logging
+log = logging.getLogger('Hansard.main')
+
 
 def preprocess_speeches(speeches, bigrams=True):
     #Concatenates the speeches into one string of text
@@ -14,9 +17,10 @@ def preprocess_speeches(speeches, bigrams=True):
     #Converts text into lowercase, and splits by whitespace
     words = text.lower().split()
     words = [w for w in words if len(w) > 1]
-    lemmatizer = WordNetLemmatizer()
     #Reduce each word to its root
+    log.info('Running lemmatizer')
     words = [lemmatizer.lemmatize(w, pos='v') for w in words]
+    log.info('Completed running lemmatizer')
     if bigrams == False:
         return words
     bigrams = ngrams(words, 2)

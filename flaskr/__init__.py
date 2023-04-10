@@ -5,17 +5,36 @@ from flask import session
 from flask_session import Session
 import logging
 import psutil
+import time
 print('Importing SentenceTransformer. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t0 = time.time()
 from sentence_transformers import SentenceTransformer
+_t1 = time.time()
+print('\tTook %.3f seconds ' % (_t1-_t0))
 print('Loading Specific SentenceTransformer. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t0 = time.time()
 HansardSentenceTransformer = SentenceTransformer('sentence-transformers/average_word_embeddings_komninos')
+_t1 = time.time()
+print('\tTook %.3f seconds ' % (_t1-_t0))
 #HansardSentenceTransformer = SentenceTransformer('nreimers/MiniLM-L6-H384-uncased')
 print('Importing bertopic. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t0 = time.time()
 from bertopic import BERTopic 
+_t1 = time.time()
+print('\tTook %.3f seconds ' % (_t1-_t0))
 print('Importing UMAP. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t0 = time.time()
 from umap import UMAP
-print('Importing nltk ngrams. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t1 = time.time()
+print('\tTook %.3f seconds ' % (_t1-_t0))
+print('Importing nltk ngrams and WordNetLemmatizer. %.3f%% memory usage' % psutil.virtual_memory().percent)
+_t0 = time.time()
 from nltk import ngrams
+from nltk.stem import WordNetLemmatizer
+lemmatizer = WordNetLemmatizer()
+_ = lemmatizer.lemmatize('cat') #Force it to do initial setup work now
+_t1 = time.time()
+print('\tTook %.3f seconds ' % (_t1-_t0))
 
 
 class LogFilter(logging.Filter):
