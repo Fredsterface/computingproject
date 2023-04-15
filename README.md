@@ -12,7 +12,7 @@ This project is currently hosted at http://3.10.107.222:8080/]
 
 The first page you see when the website initially loads. Shows the user how to use the website and how it all works.
 
-<img src="blob:chrome-untrusted://media-app/39a8529b-21c6-4a0f-8c11-0711b879a98b" alt="Screenshot 2023-04-15 19.18.29.png"/>![image](https://user-images.githubusercontent.com/61631056/232246751-b841200b-e8f3-4b16-8875-bde6aa915c79.png)
+<img src=screenshot/screenshot_of_intro_page.png alt="Screenshot 2023-04-15 19.18.29.png"/>![image](https://user-images.githubusercontent.com/61631056/232246751-b841200b-e8f3-4b16-8875-bde6aa915c79.png)
 
 
 When the user searches for a constituency using the dropdown search box, this page loads up with a wordcloud of all of their speeches. The user then has the option of looking through the other tabs at the top of the screen
