@@ -5,6 +5,26 @@ This project is currently hosted at http://3.10.107.222:8080/]
 
 ## How to install the programme
 
+### Configure Python virtual environment
+
+Creating a virtual environment called venv
+```bash
+python3 -m venv venv
+. venv/bin/activate
+python -m pip install -r requirements.txt
+```
+To run the Flask server in debug mode on port 8080:
+```bash
+python run.py --debug --port 8080
+```
+To run the Flask server in production mode on port 8080:
+```bash
+python run.py --port 8080
+```
+To run using [gunicorn](https://gunicorn.org/):
+```bash
+gunicorn -w 2 -b 0.0.0.0:8080 --timeout 600 'run:create_app()'
+```
 
 
 ## Screenshots of use
