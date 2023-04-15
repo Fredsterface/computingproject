@@ -45,7 +45,7 @@ log.info('Got Blueprint')
 
 class SearchTermForm(FlaskForm):
     """
-    Form in Search tab
+    Form in Search tab using Python Forms (WTF)
     """
     searchTerm = StringField('Search Term', validators=[DataRequired()])
     submit = SubmitField()
@@ -101,7 +101,7 @@ class HansardMP:
     """
     def __init__(self, postcode_or_constituency, minLength=25):
         """
-        
+        Initialises the info about the chosen MP
         """
         self.info = getMP(postcode_or_constituency)
         self.minLength = minLength
@@ -116,40 +116,74 @@ class HansardMP:
 
     @property
     def sentenceTransformer(self):
+        """
+        Returns the function that converts text into vectors
+        """
         return self._sentenceTransformer
 
     @property
     def constituency(self):
+        """
+        Returns the constituency chosen by the user
+        """
         return self.info['constituency']
 
     @property
     def person_id(self):
+        """
+        Returns the ID from Hansard for the chosen MP
+        """
         return self.info['person_id']
 
     @property
     def party(self):
+        """
+        Returns the political party for the chosen MP
+        """
         return self.info['party']
 
     @property
     def image(self):
+        """
+        Returns the URL of the image of the chosen MP
+        """
         return 'https://www.theyworkforyou.com' + self.info['image']
 
     @property
     def full_name(self):
+        """
+        Returns the full name of the chosen MP
+        """
         return self.info['full_name']
 
     def get_speeches(self):
+        """
+        Gets all the speeches for the chosen MP from the Hansard API.
+        Sets self._speeches to be a list, and each element of the list, and each entry is a dictionary
+        with keys timestamps, and text. 
+        Timestamp is a unix timestamp.
+        Speeches are presnted in the order of latest speech tp the earliest.
+        """
         log.info('Getting speeches for %s', self.full_name)
         self._speeches = getSpeeches(self.person_id, self.minLength)
         log.info('Completed getting speeches for %s', self.full_name)
 
     @property
     def speeches(self):
+        """
+       Returns the speeches.
+       If they have not yet been retrieved, retrieve them 
+        """
         if self._speeches is None:
             self.get_speeches()
         return self._speeches
 
     def get_wordcloud_freqs(self):
+        """
+        Computes the wordcloud frequencies.
+        Sets self._wordcloud_freqs to be a Counter.
+        The Keys are the word/bigrams, and the values are the Counts of each word
+        """
         log.info('Preprocessing %d speeches for %s',
                  len(self.speeches), self.full_name)
         text = [x['text'] for x in self.speeches]
@@ -163,26 +197,55 @@ class HansardMP:
 
     @property
     def wordcloud_freqs(self):
+        """
+        Returns the wordcloud frequencies.
+        If they have not been retrieved, retrieve them
+        """
         if self._wordcloud_freqs is None:
             self.get_wordcloud_freqs()
         return self._wordcloud_freqs
 
     def get_embeddings(self):
+        """
+        Computes the embeddings.
+        Sets self._embeddings to be a list.
+        Each entry of the list is a dictionary with keys
+        timestamp - a unix timestamp.
+        text - a speech with all the stopwords removed
+        vector - a 300 dimensional vector with norm 1.0 that represents the text
+        idx - the index of this speech in self._speeches
+        """
         data = preprocess_speeches_for_embeddings(
             self.speeches, stopwords=self.stopwords, min_length=self.minLength)
         vectors = self.sentenceTransformer.encode([x['text'] for x in data], normalize_embeddings=True)
         for i in range(len(data)):
             data[i]['vector'] = vectors[i]
         self._embeddings = data
-        log.info('Computed emeddings frequencies for %s', self.full_name)
+        log.info('Computed emeddings for %s', self.full_name)
 
     @property
     def embeddings(self):
+        """
+        Returns the embeddings.
+        If they have not been computed, compute them
+        """
         if self._embeddings is None:
             self.get_embeddings()
         return self._embeddings
 
     def find_most_similar(self, sentence):
+        """
+        The input is a sentence as a text string.
+        This function does the following: 
+        1. Produces a vector for the sentence
+        2. Score the vector against existing embeddings by cosine similarity
+        3. Sort by score, to find the most similar 10 vectors
+        4. Recover the original most similar speeches
+
+        Returns a list. Each entry of the list is a dictionary with keys
+        text - a speech by the MP
+        date - the date the MP said the speech in a readable format
+        """
         log.info('Finding vector for sentence %s', sentence)
         vector = self.sentenceTransformer.encode([sentence], normalize_embeddings=True)[0]
         log.info('Found vector sentence')
@@ -201,6 +264,10 @@ class HansardMP:
         return most_similar
 
     def get_topic_model(self):
+        """
+        Computes a BERTopic topic model
+        for example see: https://maartengr.github.io/BERTopic/getting_started/tips_and_tricks/tips_and_tricks.html#speed-up-umap
+        """
         # Initiate UMAP
         umap_model = UMAP(n_neighbors=15,
                           n_components=5,
@@ -213,12 +280,21 @@ class HansardMP:
 
     @property
     def topic_model(self):
+        """
+        Returns the topic modelling.
+        If they have not been retrieved, get the topic models and return them
+        """
         if self._topic_model is None:
             self.get_topic_model()
             self.run_topic_model()
+            
         return self._topic_model
 
     def run_topic_model(self):
+        """
+        Runs the topic modelling
+        Assings a topic to each speech
+        """
         text, embeddings = [x['text'] for x in self.embeddings], np.array(
             [x['vector'] for x in self.embeddings])
         log.info('Running topic model for %s on %d extracts',
@@ -228,6 +304,13 @@ class HansardMP:
         log.info('Completed running topic model %s', self.full_name)
 
     def get_representative_docs(self):
+        """
+         Retrieves representative documents for each topic from the topic model.
+    
+    Returns:
+    - tables: List of lists, where each inner list contains the date and text of a representative document 
+              for a particular topic.
+        """
         tables = []
         log.info('Getting representative docs')
         for i in self.topic_model.get_topics().keys():
@@ -246,36 +329,50 @@ class HansardMP:
 
     @property
     def representative_docs(self):
+        """
+        Property that returns the representative documents for each topic from the topic model.
+    If the representative documents have not been retrieved yet, it calls the `get_representative_docs()` 
+    method to retrieve them and stores them in a private variable for future access.
+
+    Returns:
+    - tables: List of lists, where each inner list contains the date and text of a representative document 
+              for a particular topic.
+        """
         if self._representative_docs is None:
             self._representative_docs = self.get_representative_docs()
         return self._representative_docs
 
 
 def word_frequency(sentence):
+    """
+    Computes word frequency, word pairs frequency, and trigrams frequency from a given sentence.
+
+    Args:
+    - sentence: List of strings, representing the input sentence.
+
+    Returns:
+    - word_freq: Pandas DataFrame, containing the word frequency with columns 'word' and 'frequency',
+                 sorted by frequency in descending order.
+    - word_pairs: Pandas DataFrame, containing the word pairs frequency with columns 'pairs' and 'frequency',
+                  sorted by frequency in descending order.
+    - trigrams: Pandas DataFrame, containing the trigrams frequency with columns 'trigrams' and 'frequency',
+                sorted by frequency in descending order.
+    """
     global mystopwords
-    # joins all the sentenses
     sentence = " ".join(sentence)
-    # creates tokens, creates lower class, removes numbers and lemmatizes the words
     print('starting to tokenize')
     new_tokens = tokenizer().tokenize(sentence)
     print('finished tokenize')
-    # new_tokens = sentence.split()
     new_tokens = [t.lower().strip() for t in new_tokens]
-    # S = set(stopwords.words('english'))
     if mystopwords is None:
         mystopwords = get_stopwords()
     S = mystopwords
     new_tokens = [t for t in new_tokens if t not in S]
     new_tokens = [t for t in new_tokens if t.isalpha()]
     lemmatizer = WordNetLemmatizer()
-    # print('startin lemon')
-    # new_tokens = [lemmatizer.lemmatize(t) for t in new_tokens]
-    # print('finish lemon')
-    # counts the words, pairs and trigrams
     counted = Counter(new_tokens)
     counted_2 = Counter(ngrams(new_tokens, 2))
     counted_3 = Counter(ngrams(new_tokens, 3))
-    # creates 3 data frames and returns them
     word_freq = pd.DataFrame(counted.items(), columns=[
                              'word', 'frequency']).sort_values(by='frequency', ascending=False)
     word_pairs = pd.DataFrame(counted_2.items(), columns=[
@@ -289,10 +386,16 @@ constituencies = None
 
 @bp.route('/index')
 def index():
+    """
+    Redirects to the 'main.main' endpoint from the '/index' route.
+    """
     return redirect(url_for('main.main'))
 
 @bp.route('/', methods=('GET', 'POST'))
 def main(selected_constituency=None, MP=None, wordclouddata=None, form=None):
+    """
+    Renders the main page with optional parameters for selected_constituency, MP, wordclouddata, and form.
+    """
     global constituencies
     log.info('Working')
     display_tab = 'wordcloud'
@@ -341,6 +444,9 @@ def main(selected_constituency=None, MP=None, wordclouddata=None, form=None):
 
 @bp.route('/search', methods=('GET', 'POST'))
 def search():
+    """
+    Performs a search based on user-selected constituency, retrieves wordcloud data, and returns the main page.
+    """
     constituency = None
     select = request.form.get('constituency')
     log.info("select=%s", select)

@@ -1,7 +1,5 @@
-import os
 from flask import Flask
 from flask_bootstrap import Bootstrap5
-from flask import session
 from flask_session import Session
 import logging
 import psutil
@@ -46,19 +44,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY = 'dev',
     )
-#    if test_config is None:
-#        app.logger.info('test_config is None')
-#        app.config.from_pyfile('config.py', silent=True)
-#    else:
-#        app.logger.info('test_config from mapping')
-#        app.config.from_mapping(test_config)
-#    try:
-#        app.logger.info('Trying to make dirs')
-#        os.makedirs(app.instance_path)
-#        app.logger.info('Completed make dirs')
-#    except OSError:
-#        pass
 
+    
     app.logger.info('Importing main')
        
     from . main import bp
