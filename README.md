@@ -3,7 +3,7 @@
 
 This project is currently hosted at http://3.10.107.222:8080/]
 
-## How to use
+## How to install the programme
 
 
 
