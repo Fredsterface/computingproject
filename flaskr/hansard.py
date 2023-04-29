@@ -74,7 +74,7 @@ def getHansard(person_id):
     dict: The information from Hansard about the person_id
     """
     params = {'key':APIkey}
-    params['person'] = person_id
+    params['id'] = person_id
     params['num'] = 512
     url = 'https://www.theyworkforyou.com/api/getMP'
     response = requests.get(url, params=params)
