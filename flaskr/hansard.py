@@ -62,6 +62,24 @@ def getMP(postcode_or_constituency):
     response = requests.get(url, params=params)
     return response.json()
 
+def getMPExtraInfo(person_id):
+    """
+    This function takes one argument and returns the MP's person ID from Hansard.
+    
+    Args:
+    personID (int): 
+    
+    Returns:
+    dict: Get extra MP information
+    """
+    params = {'key':APIkey}
+    params['id'] = person_id
+    
+    url = 'https://www.theyworkforyou.com/api/getMPInfo'
+    response = requests.get(url, params=params)
+    return response.json()
+
+
 functools.lru_cache(maxsize = 128)
 def getHansard(person_id):
     """
